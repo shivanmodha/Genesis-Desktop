@@ -1,0 +1,2135 @@
+
+> genesis-desktop@1.0.0 start C:\Vanish Studios\Genesis-Desktop
+> node main.js
+
+<head>
+    
+
+<link rel="apple-touch-icon" href="/genesis/images/ipad-icon.png">
+<link rel="shortcut icon" href="/genesis/images/newIcon2.ico" type="image/x-icon">
+<link href="/genesis/styles/parents.css" rel="stylesheet" type="text/css">
+
+
+<script type="text/javascript" src="/genesis/js/jquery-current.min.js"></script>
+<script type="text/javascript" src="/genesis/js/jquery-ui-current.min.js"></script>
+<link rel="stylesheet" href="/genesis/styles/genetheme/jquery-ui-current.custom.min.css">
+
+<title>Parents at South Brunswick Public Schools</title>
+
+
+
+    <script type="text/javascript" src="/genesis/sis/validations.js"></script>
+<script type="text/javascript">
+
+    
+    
+    
+        
+            
+        
+    
+    
+
+    function getAssignments(studentid, date)
+    {
+        document.frmHome.action='parents?tab1=studentdata&tab2=gradebook&tab3=listassignments&studentid=' + studentid + '&action=form&date=' + date + '&dateRange=dayof&courseAndSection=&status=';
+        document.frmHome.submit();
+    }
+
+    function notifyOffice(studentid)
+    {
+        document.frmHome.action='parents?tab1=studentdata&tab2=attendance&tab3=notify&studentid=' + studentid + '&action=form';
+        document.frmHome.submit();
+    }
+
+    function changeDay(day, studentid)
+    {
+        window.location.href = 'parents?tab1=studentdata&tab2=studentsummary&studentid=' + studentid + '&action=form&busview=day&dayName=' + day;
+    }
+
+    function changeUserTextValue(studentid, userTextCode, desc)
+    {
+        console.log('dialog-editText-' + studentid + '-' + userTextCode );
+        $( '#dialog-editText-' + studentid + '-' + userTextCode ).dialog({
+            resizable: false,
+            height:'auto',
+            width:500,
+            modal: true,
+            buttons: {
+                Save: function() {
+                    $( this ).dialog( "close" );
+                    $('#frmUpdateUserText-' + studentid + '-' + userTextCode).submit();
+                },
+                Cancel: function() {
+                    $( this ).dialog( "close" );
+                }
+            }
+        });
+    }
+
+    function changeUserFlagValue(studentid, userFlagCode, desc)
+    {
+        confirmDialog('Toggle the check for ' + desc + '?',function() {
+            location.href = 'parents?tab1=studentdata&tab2=studentsummary&action=toggleUserFlag&studentid=' + studentid + '&userFlagCode=' + userFlagCode;
+        });
+    }
+
+    function validateInputs(studentId)
+    {
+        var testField1 = document.getElementById('fldAuthorizedAdultPhone-' + studentId);
+        var testField2 = document.getElementById('fldAuthorizedAdult-' + studentId);
+        if (testField1.value == "" || testField2.value == "")
+            return "You must enter Authorized Adult/Activity and Contact Number, and then select the checkbox.";
+        else
+            return "";
+    }
+
+    function showDailyPickupDialog(studentId, dailyPickupReadOnly, releaseType)
+    {
+        $( "#dialog-dailyPickup-" + studentId ).dialog({
+            resizable: false,
+            height:'auto',
+            width:580,
+            modal: true,
+            buttons:
+            {
+                Save: function()
+                {
+                    var validationMessage = validateInputs(studentId);
+
+                    if (validationMessage == "")
+                    {
+                        var acknowledged = $('#fldAcknowledgement-' + studentId).is(':checked');
+                        if (acknowledged)
+                        {
+                            $( this ).dialog( "close" );
+                            document['frmDailyPickup-' + studentId].submit();
+                        }
+                        else
+                        {
+                            alertDialog('Please indicate that you have finished filling out this form by selecting the checkbox.');
+                        }
+                    }
+                    else
+                    {
+                        alertDialog(validationMessage);
+                    }
+                },
+                Cancel: function()
+                {
+                    $( this ).dialog( "close" );
+                }
+            },
+            open: function()
+            {
+                if (dailyPickupReadOnly)
+                    $(".ui-dialog-buttonpane button:contains('Save')").button('disable');
+
+                $('#fldReleaseType-' + studentId).val(releaseType);
+                var noteTag = "noteField_" + studentId;
+                var text = $('#'+noteTag).text();
+                $('#fldNotes-' + studentId).val(text);
+            }
+        });
+    }
+
+    function deleteDailyPickupRelease(workStudentId, navStudentId, readOnly)
+    {
+        if (readOnly)
+        {
+            alertDialog('Pickup releases cannot be deleted after 12pm, please call your school to make any changes.');
+            return;
+        }
+        confirmDialog("Are you sure?",function()
+        {
+            location.href = 'parents?tab1=studentdata&tab2=studentsummary&action=deleteDailyPickupRelease&studentid=' + navStudentId + '&workStudentId=' + workStudentId;
+        });
+
+    }                                                                
+
+</script></head>
+
+
+
+<body class="parentsBody">
+
+
+
+
+
+
+ <!-- Needed to determine access to certain tabs (conferences, letters) -->
+
+
+    <script type="text/javascript">
+        function changeStudent(newstudentid)
+        {
+            location.href = document.URL.replace('10009778',newstudentid);
+        }
+
+        function header_goToTab(newTab1, appendParams)
+        {
+            if (appendParams == '')
+                location.href='/genesis/parents?tab1=' + newTab1 + '&action=form';
+            else
+                location.href='/genesis/parents?tab1=' + newTab1 + '&action=form' + '&' + appendParams;
+        }
+
+        function initHeader()
+        {
+            
+        }
+
+        function confirmDialog(questionToAsk, okFunction, cancelFunction)
+        {
+            $( "#_dialog-confirm_" ).dialog({
+                resizable: false, height:'auto', width:600, modal: true,
+                title: 'Confirmation',
+                open: function()
+                {
+                    $('#_confirmDialogText_').html(questionToAsk);
+                },
+                buttons:
+                {
+                    Ok: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (okFunction!=null)
+                            okFunction();
+                    },
+                    Cancel: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (cancelFunction!=null)
+                            cancelFunction();
+                    }
+                }
+            });
+        }
+
+        function alertDialog(alertText, okCallback)
+        {
+            $( "#_dialog-alert_" ).dialog({
+                resizable: false, height:'auto', width:600, modal: true,
+                title: 'Information',
+                open: function()
+                {
+                    $('#_confirmAlertText_').html(alertText);
+                },
+                buttons:
+                {
+                    Ok: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (okCallback)
+                            okCallback();
+                    }
+                }
+            });
+        }
+
+        function promptDialog(questionToAsk, defaultAnswer, okFunction, cancelFunction)
+        {
+            if (defaultAnswer==null) defaultAnswer = '';
+            $( "#_dialog-prompt_" ).dialog({
+                resizable: false, height:'auto', width:600, modal: true,
+                title: 'Prompt',
+                open: function()
+                {
+                    $('#_confirmPromptText_').html(questionToAsk);
+                    $('#_prompt_dialog_value_').val(defaultAnswer).removeClass('fieldValueChanged').addClass('fieldValue').focus().select();
+                },
+                buttons:
+                {
+                    Ok: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (okFunction!=null)
+                        {
+                            var __prompt__answer = $('#_prompt_dialog_value_').val();
+                            if (__prompt__answer == null) __prompt__answer = '';
+                            $('#_prompt_dialog_value_').removeClass('fieldValueChanged').addClass('fieldValue');
+                            okFunction(__prompt__answer);
+                        }
+                    },
+                    Cancel: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (cancelFunction!=null)
+                            cancelFunction();
+                    }
+                }
+            });
+        }
+
+        function toggleDisclaimer()
+        {
+            location.href = document.URL + '&toggleDisclaimer=true';
+        }
+
+        var message = '';
+        if (message.length>0)
+        {
+            $(function () {
+                alertDialog(message);
+            });
+        }
+        
+
+    </script>
+ <!-- Start of Header-->
+
+
+<div class="headerModules">
+    <div style="text-align: left; float:left; white-space: nowrap; ">
+        <span style="font-size:18pt; font-weight: 600; text-transform: none; text-wrap: none; margin-left:28px;margin-top: 2px; ">
+            <img src="/genesis/images/genesis-logo405x103.png" alt="Genesis" style="height:40px; margin-left:5px;  cursor:pointer; vertical-align: bottom;margin-top: 4px;margin-right: 7px;" onclick="window.open('http://www.genesisedu.com');" align="left">
+            <br>
+            
+            
+                Student Resources
+            
+        </span>
+    </div>
+    <div style="text-align: right; white-space: nowrap">
+
+        
+        
+            
+                
+                    
+                
+            
+                
+                    
+                        
+
+                        
+                            
+                            
+                            
+                        
+                        
+                        <span class="headerModuleTabSelected" onclick="header_goToTab('studentdata','studentid=10009778');">
+                            <img src="/genesis/parents/images/buttons/students_white.png" alt="" style="vertical-align: bottom">
+                            Student Data
+                            
+                                
+                            
+                        </span>
+                    
+                
+            
+                
+                    
+                
+            
+                
+                    
+                        
+
+                        
+                        
+                            
+                            
+                        
+                        <span class="headerModuleTab" onclick="header_goToTab('setup','studentid=10009778');">
+                            <img src="/genesis/parents/images/buttons/settings_blue.png" alt="" style="vertical-align: bottom">
+                            Settings
+                            
+                                
+                            
+                        </span>
+                    
+                
+            
+        
+
+        <span class="headerModuleTab" onclick="location.href='parents?logout=true';">
+            <img src="/genesis/parents/images/buttons/lock_blue.png" alt="" style="vertical-align: bottom">
+            Logout
+        </span>
+        &nbsp;
+   </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="headerCategories">
+    <div class="headerCategories" style="height:15px;">&nbsp;</div>
+
+    
+        
+            
+                
+                    
+
+                    
+                        
+                        
+                    
+                    
+
+                    
+                    
+                        <span class="headerCategoryTabSelected" onclick="header_goToTab('studentdata&amp;tab2=studentsummary','studentid=10009778');">
+                            Summary
+                        </span>
+                    
+
+                
+            
+        
+            
+                
+                    
+
+                    
+                    
+                        
+                    
+
+                    
+                    
+                        <span class="headerCategoryTab" onclick="header_goToTab('studentdata&amp;tab2=attendance','studentid=10009778');">
+                            Attendance
+                        </span>
+                    
+
+                
+            
+        
+            
+                
+                    
+
+                    
+                    
+                        
+                    
+
+                    
+                    
+                        <span class="headerCategoryTab" onclick="header_goToTab('studentdata&amp;tab2=gradebook','studentid=10009778');">
+                            Gradebook
+                        </span>
+                    
+
+                
+            
+        
+            
+                
+                    
+
+                    
+                    
+                        
+                    
+
+                    
+                    
+                        <span class="headerCategoryTab" onclick="header_goToTab('studentdata&amp;tab2=forms','studentid=10009778');">
+                            Forms
+                        </span>
+                    
+
+                
+            
+        
+            
+                
+            
+        
+            
+                
+                    
+
+                    
+                    
+                        
+                    
+
+                    
+                    
+                        <span class="headerCategoryTab" onclick="header_goToTab('studentdata&amp;tab2=school','studentid=10009778');">
+                            School Information
+                        </span>
+                    
+
+                
+            
+        
+    
+</div>
+
+
+    <div class="headerStudentSelector">
+        <div class="headerStudentSelector" style="height:11px;">&nbsp;</div>
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tbody><tr>
+                <td width="50%" style="font-size: 2.4em;font-weight: 300; margin-top: 8px;">
+                    Summary
+                </td>
+
+                <td width="50%">
+                    <label for="fldStudent" style="text-transform: uppercase;">Select Student:</label>
+                    <select name="fldStudent" id="fldStudent" class="headerStudentSelectorInput" onchange="changeStudent(this.value);">
+                        
+                            <option value="10009778" selected="">Modha, Shivan</option>
+                        
+                    </select>
+                </td>
+            </tr>
+        </tbody></table>
+    </div>
+
+
+
+
+
+
+
+
+
+
+    <div style="font-size:.8em; cursor:pointer; padding:2px 0 2px 0;" onclick="toggleDisclaimer();">
+        <table cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+            <tbody><tr>
+                
+                <td style="padding-left: 10px;">Monday, 9/25/2017 9:15PM</td>
+                <td style="text-align: right; padding-right: 10px; color: blue;">Hide</td>
+            </tr>
+        </tbody></table>
+    </div>
+    
+        <table class="notecard" style="padding:8px;"><tbody><tr><td class="notecardTitle"> </td></tr><tr><td>
+            <div style="font-size:.8em;">This online resource is designed to help parents/guardians stay informed. Please use for its intended purpose. Placements may still be adjusted as we are making adjustments for increased enrollment.</div>
+        </td></tr></tbody></table>
+    
+
+<br>
+
+
+
+
+
+
+
+
+<form name="frmCentris" id="frmCentris" method="post" action="https://portal.iepdirect.com/Genesis/Authenticate/Parent" target="_blank">
+    <input type="hidden" name="GenesisRequest" value="">
+</form>
+
+<form name="frmHome" method="post" target="_top" action="">
+
+
+
+
+
+
+
+
+
+
+    
+
+<table class="notecard" style="background-color:#eaf8fc;"><tbody><tr><td class="notecardTitle"> </td></tr><tr><td>
+
+<table>
+
+<tbody><tr valign="top">
+<!-- Draw Student Demographics and whereabouts -->
+<td valign="top">
+    <table class="list">
+        <tbody><tr class="listroweven">
+            <td class="cellCenter" colspan="2" style="border: none;">
+                
+                    <img src="/genesis/sis/photos?type=student&amp;studentID=10009778" style="width:200px; border: solid 1pt #EEEEEE" alt="">
+                
+            </td>
+        </tr>
+        
+        <tr class="listroweven">
+            <td nowrap="" class="cellLeft" colspan="2" style="border: none;">
+                
+                    Homeroom:<br>
+                    
+                    
+                    
+                    
+                        
+                                    <span style="font-weight: 600">
+                                        
+                                        
+                                        
+                                    </span>
+                    
+                
+            </td>
+        </tr>
+        <tr class="listroweven">
+            <td nowrap="" class="cellLeft" colspan="2" style="border: none;">
+                
+                    Counselor:<br>
+                    <span style="font-weight: 600;">
+                        Marcella, Anastasia L
+                        
+                        
+                    </span>
+                
+            </td>
+        </tr>
+        <tr class="listroweven">
+            <td nowrap="" class="cellLeft" style="border: none;padding: 1pt 5pt">Age:</td>
+            <td nowrap="" class="cellLeft" style="border: none;padding: 1pt 5pt;font-weight: 600;">17</td>
+        </tr>
+        
+            <tr class="listroweven">
+                <td nowrap="" class="cellLeft" style="border: none;padding: 1pt 5pt">Birthdate:</td>
+                <td nowrap="" class="cellLeft" style="border: none;padding: 1pt 5pt;font-weight: 600;">03/06/2000</td>
+            </tr>
+        
+
+
+        
+
+        
+
+        
+
+            
+        
+        
+
+            
+        
+        
+        
+    </tbody></table>
+    <br>
+</td>
+
+<!-- Draw the schedule -->
+
+
+<td valign="top">
+    <table class="list" cellspacing="0" cellpadding="0" style="width: 100%; color: #001E37">
+        <tbody><tr>
+            <td style="font-size: 1.5em;">
+                <span style="font-weight: 100; color: #001E37">Shivan</span>
+                Modha
+            </td>
+            <td style="text-align: center;" rowspan="2">
+                <span style="font-size: .8em;text-transform: uppercase">Grade:</span><br>
+                <span style="font-size: 2em;">12</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="font-size:.8em; white-space: nowrap; text-transform: uppercase">
+                
+                
+                    South Brunswick High School
+                    
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                
+                Student ID: <span style="font-weight: bold;">10009778</span>&nbsp;&nbsp;|&nbsp;&nbsp;
+                State ID: <span style="font-weight: bold;">4156292289</span>
+            </td>
+        </tr>
+    </tbody></table>
+    
+    
+        
+        
+    
+    
+    <div style="margin-left: 8pt; margin-top: 3pt; margin-bottom: 7pt; border-top: solid 1px #25ADD3"></div>
+    
+        
+        
+
+        <div style="font-size:10pt;text-align: center;">
+
+            Print Schedule:
+            
+                &nbsp;&nbsp;<a target="_blank" href="parents?tab1=studentdata&amp;tab2=studentsummary&amp;studentid=10009778&amp;action=printSchedule" title="Print schedule in list format"><img src="/genesis/parents/images/buttons/blueAdobe.png" style="width:16px;vertical-align: middle;" alt="" border="0" title="Print schedule in list format"> List</a>
+            
+            
+            
+                
+            
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <span style="font-weight: normal">
+                    Day:
+                    <b>B
+                        
+                    </b>
+                </span>
+            
+                
+        </div>
+
+
+        <table class="list" width="100%" border="0" style="border: solid 1pt #EEEEEE;">
+            
+
+            <tbody><tr class="listheading">
+                <td class="cellCenter">Per</td>
+                <td class="cellLeft" nowrap="">Course</td>
+                <td class="cellLeft">Sem</td>
+                <td class="cellLeft">Days</td>
+                
+                
+                    <td class="cellLeft">Room</td>
+                    <td class="cellLeft" nowrap="">Teacher</td>
+                
+            </tr>
+            
+
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">1</td>
+                <td class="cellLeft">AP STATISTICS</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">B</td>
+                
+                    <td class="cellLeft">B208</td>
+                    <td class="cellLeft" colspan="2">Rumen, Jeffrey</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">1</td>
+                <td class="cellLeft">INDEPENDENT STUDY-GAME DEVELOPMENT</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">E302</td>
+                    <td class="cellLeft" colspan="2">Schiff, Steven</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">AP ART HISTORY</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">B</td>
+                
+                    <td class="cellLeft">210</td>
+                    <td class="cellLeft" colspan="2">Snediker, Betty</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">PHYSICAL EDUCATION 12</td>
+                <td class="cellLeft">Q1</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">GYM</td>
+                    <td class="cellLeft" colspan="2">Verderami, Mindy</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">PHYSICAL EDUCATION 12</td>
+                <td class="cellLeft">Q2</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">GYM</td>
+                    <td class="cellLeft" colspan="2">Verderami, Mindy</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">PHYSICAL EDUCATION 12</td>
+                <td class="cellLeft">Q3</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">GYM</td>
+                    <td class="cellLeft" colspan="2">Verderami, Mindy</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">SENIOR HEALTH</td>
+                <td class="cellLeft">Q4</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">B301</td>
+                    <td class="cellLeft" colspan="2">Verderami, Mindy</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">3</td>
+                <td class="cellLeft">MULTIVARIABLE CALCULUS &amp; LINEAR ALGEBRA</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">310</td>
+                    <td class="cellLeft" colspan="2">Cakir, Mesut</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">3</td>
+                <td class="cellLeft">CS TOPICS: DATA STRUCTURES &amp; GAME DESIGN</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">B</td>
+                
+                    <td class="cellLeft">300</td>
+                    <td class="cellLeft" colspan="2">Dentler, Stephen</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">4</td>
+                <td class="cellLeft">HONORS ENGLISH IV</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">B</td>
+                
+                    <td class="cellLeft">D201</td>
+                    <td class="cellLeft" colspan="2">Lehre, Anna</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">4</td>
+                <td class="cellLeft">AP COMPUTER SCIENCE PRINCIPLES</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">E302</td>
+                    <td class="cellLeft" colspan="2">Romero, Carol</td>
+                
+                
+                </tr>
+            
+            
+        </tbody></table>
+        <br>
+    
+
+        
+    <table class="list" cellspacing="0" cellpadding="0" style="width:100%; margin-bottom: 3pt;">
+        <tbody><tr>
+            <td style="vertical-align: top;">
+
+                <!-- If we will be displaying attendance or assignments, print the table. -->
+                
+
+                    <table cellspacing="0" cellpadding="0" style="border: solid 1pt #EEEEEE; border-collapse: collapse;">
+                            
+                            
+                            
+                        <tbody><tr class="listheading" style="font-weight:bold;">
+                            <td class="cellLeft" style="padding: .25em .5em .25em .5em;">This Week</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">M</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">T</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">W</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">R</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">F</td>
+                        </tr>
+
+                            
+                        
+                            <tr class="listroweven">
+                                
+                                <td class="cellSecondaryHeading cellCenter">Attendance</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+
+                                
+                            </tr>
+                        
+
+                            
+                        
+                            <tr class="listroweven">
+                                <td class="cellSecondaryHeading cellCenter">Assignments</td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/25/2017');">1</span></td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/26/2017');">0</span></td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/27/2017');">1</span></td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/28/2017');">0</span></td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/29/2017');">0</span></td>
+                            </tr>
+                        
+                                
+
+                                    
+                                    
+
+                                    
+                                
+                    </tbody></table>
+                
+            </td>
+            <td>
+                
+                
+
+                
+            </td>
+        </tr>
+    </tbody></table>
+    
+        
+    
+</td>
+</tr>
+</tbody></table>
+</td></tr></tbody></table>
+
+<br>
+
+
+</form>
+
+
+    
+    
+    
+    
+
+
+
+
+
+    
+    
+
+    
+    
+
+
+
+
+
+
+
+
+
+<script type="text/javascript">
+    function toggleLanguage()
+    {
+        location.href = document.URL + '&toggleLanguage=true';
+    }
+
+    function toggleMobileSite()
+    {
+        location.href = document.URL + '&toggleMobileSite=true';
+    }
+</script>
+
+  <table class="footer" cellpadding="0" cellspacing="0">
+      <tbody><tr>
+          <td>
+              <div id="google_translate_element"></div>
+              <script type="text/javascript">
+                  function googleTranslateElementInit()
+                  {
+                      // TODO: If any changes are made to includedLanguages, copy them to parentsFooterMobile.jsp and openRegistration/header.jsp
+                      new google.translate.TranslateElement({
+                          pageLanguage: 'en',
+                          includedLanguages: 'ar,es,it,ja,pt,zh-CN,en,ru,ko,gu,tl,fa,vi',
+                          layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+                      }, 'google_translate_element');
+                  }
+              </script>
+              <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script></td></tr></tbody></table></body>
+****************SEP****************
+<head>
+    
+
+<link rel="apple-touch-icon" href="/genesis/images/ipad-icon.png">
+<link rel="shortcut icon" href="/genesis/images/newIcon2.ico" type="image/x-icon">
+<link href="/genesis/styles/parents.css" rel="stylesheet" type="text/css">
+
+
+<script type="text/javascript" src="/genesis/js/jquery-current.min.js"></script>
+<script type="text/javascript" src="/genesis/js/jquery-ui-current.min.js"></script>
+<link rel="stylesheet" href="/genesis/styles/genetheme/jquery-ui-current.custom.min.css">
+
+<title>Parents at South Brunswick Public Schools</title>
+
+
+
+    <script type="text/javascript" src="/genesis/sis/validations.js"></script>
+<script type="text/javascript">
+
+    
+    
+    
+        
+            
+        
+    
+    
+
+    function getAssignments(studentid, date)
+    {
+        document.frmHome.action='parents?tab1=studentdata&tab2=gradebook&tab3=listassignments&studentid=' + studentid + '&action=form&date=' + date + '&dateRange=dayof&courseAndSection=&status=';
+        document.frmHome.submit();
+    }
+
+    function notifyOffice(studentid)
+    {
+        document.frmHome.action='parents?tab1=studentdata&tab2=attendance&tab3=notify&studentid=' + studentid + '&action=form';
+        document.frmHome.submit();
+    }
+
+    function changeDay(day, studentid)
+    {
+        window.location.href = 'parents?tab1=studentdata&tab2=studentsummary&studentid=' + studentid + '&action=form&busview=day&dayName=' + day;
+    }
+
+    function changeUserTextValue(studentid, userTextCode, desc)
+    {
+        console.log('dialog-editText-' + studentid + '-' + userTextCode );
+        $( '#dialog-editText-' + studentid + '-' + userTextCode ).dialog({
+            resizable: false,
+            height:'auto',
+            width:500,
+            modal: true,
+            buttons: {
+                Save: function() {
+                    $( this ).dialog( "close" );
+                    $('#frmUpdateUserText-' + studentid + '-' + userTextCode).submit();
+                },
+                Cancel: function() {
+                    $( this ).dialog( "close" );
+                }
+            }
+        });
+    }
+
+    function changeUserFlagValue(studentid, userFlagCode, desc)
+    {
+        confirmDialog('Toggle the check for ' + desc + '?',function() {
+            location.href = 'parents?tab1=studentdata&tab2=studentsummary&action=toggleUserFlag&studentid=' + studentid + '&userFlagCode=' + userFlagCode;
+        });
+    }
+
+    function validateInputs(studentId)
+    {
+        var testField1 = document.getElementById('fldAuthorizedAdultPhone-' + studentId);
+        var testField2 = document.getElementById('fldAuthorizedAdult-' + studentId);
+        if (testField1.value == "" || testField2.value == "")
+            return "You must enter Authorized Adult/Activity and Contact Number, and then select the checkbox.";
+        else
+            return "";
+    }
+
+    function showDailyPickupDialog(studentId, dailyPickupReadOnly, releaseType)
+    {
+        $( "#dialog-dailyPickup-" + studentId ).dialog({
+            resizable: false,
+            height:'auto',
+            width:580,
+            modal: true,
+            buttons:
+            {
+                Save: function()
+                {
+                    var validationMessage = validateInputs(studentId);
+
+                    if (validationMessage == "")
+                    {
+                        var acknowledged = $('#fldAcknowledgement-' + studentId).is(':checked');
+                        if (acknowledged)
+                        {
+                            $( this ).dialog( "close" );
+                            document['frmDailyPickup-' + studentId].submit();
+                        }
+                        else
+                        {
+                            alertDialog('Please indicate that you have finished filling out this form by selecting the checkbox.');
+                        }
+                    }
+                    else
+                    {
+                        alertDialog(validationMessage);
+                    }
+                },
+                Cancel: function()
+                {
+                    $( this ).dialog( "close" );
+                }
+            },
+            open: function()
+            {
+                if (dailyPickupReadOnly)
+                    $(".ui-dialog-buttonpane button:contains('Save')").button('disable');
+
+                $('#fldReleaseType-' + studentId).val(releaseType);
+                var noteTag = "noteField_" + studentId;
+                var text = $('#'+noteTag).text();
+                $('#fldNotes-' + studentId).val(text);
+            }
+        });
+    }
+
+    function deleteDailyPickupRelease(workStudentId, navStudentId, readOnly)
+    {
+        if (readOnly)
+        {
+            alertDialog('Pickup releases cannot be deleted after 12pm, please call your school to make any changes.');
+            return;
+        }
+        confirmDialog("Are you sure?",function()
+        {
+            location.href = 'parents?tab1=studentdata&tab2=studentsummary&action=deleteDailyPickupRelease&studentid=' + navStudentId + '&workStudentId=' + workStudentId;
+        });
+
+    }                                                                
+
+</script></head>
+
+
+
+<body class="parentsBody">
+
+
+
+
+
+
+ <!-- Needed to determine access to certain tabs (conferences, letters) -->
+
+
+    <script type="text/javascript">
+        function changeStudent(newstudentid)
+        {
+            location.href = document.URL.replace('10009778',newstudentid);
+        }
+
+        function header_goToTab(newTab1, appendParams)
+        {
+            if (appendParams == '')
+                location.href='/genesis/parents?tab1=' + newTab1 + '&action=form';
+            else
+                location.href='/genesis/parents?tab1=' + newTab1 + '&action=form' + '&' + appendParams;
+        }
+
+        function initHeader()
+        {
+            
+        }
+
+        function confirmDialog(questionToAsk, okFunction, cancelFunction)
+        {
+            $( "#_dialog-confirm_" ).dialog({
+                resizable: false, height:'auto', width:600, modal: true,
+                title: 'Confirmation',
+                open: function()
+                {
+                    $('#_confirmDialogText_').html(questionToAsk);
+                },
+                buttons:
+                {
+                    Ok: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (okFunction!=null)
+                            okFunction();
+                    },
+                    Cancel: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (cancelFunction!=null)
+                            cancelFunction();
+                    }
+                }
+            });
+        }
+
+        function alertDialog(alertText, okCallback)
+        {
+            $( "#_dialog-alert_" ).dialog({
+                resizable: false, height:'auto', width:600, modal: true,
+                title: 'Information',
+                open: function()
+                {
+                    $('#_confirmAlertText_').html(alertText);
+                },
+                buttons:
+                {
+                    Ok: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (okCallback)
+                            okCallback();
+                    }
+                }
+            });
+        }
+
+        function promptDialog(questionToAsk, defaultAnswer, okFunction, cancelFunction)
+        {
+            if (defaultAnswer==null) defaultAnswer = '';
+            $( "#_dialog-prompt_" ).dialog({
+                resizable: false, height:'auto', width:600, modal: true,
+                title: 'Prompt',
+                open: function()
+                {
+                    $('#_confirmPromptText_').html(questionToAsk);
+                    $('#_prompt_dialog_value_').val(defaultAnswer).removeClass('fieldValueChanged').addClass('fieldValue').focus().select();
+                },
+                buttons:
+                {
+                    Ok: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (okFunction!=null)
+                        {
+                            var __prompt__answer = $('#_prompt_dialog_value_').val();
+                            if (__prompt__answer == null) __prompt__answer = '';
+                            $('#_prompt_dialog_value_').removeClass('fieldValueChanged').addClass('fieldValue');
+                            okFunction(__prompt__answer);
+                        }
+                    },
+                    Cancel: function()
+                    {
+                        $( this ).dialog( "close" );
+                        if (cancelFunction!=null)
+                            cancelFunction();
+                    }
+                }
+            });
+        }
+
+        function toggleDisclaimer()
+        {
+            location.href = document.URL + '&toggleDisclaimer=true';
+        }
+
+        var message = '';
+        if (message.length>0)
+        {
+            $(function () {
+                alertDialog(message);
+            });
+        }
+        
+
+    </script>
+ <!-- Start of Header-->
+
+
+<div class="headerModules">
+    <div style="text-align: left; float:left; white-space: nowrap; ">
+        <span style="font-size:18pt; font-weight: 600; text-transform: none; text-wrap: none; margin-left:28px;margin-top: 2px; ">
+            <img src="/genesis/images/genesis-logo405x103.png" alt="Genesis" style="height:40px; margin-left:5px;  cursor:pointer; vertical-align: bottom;margin-top: 4px;margin-right: 7px;" onclick="window.open('http://www.genesisedu.com');" align="left">
+            <br>
+            
+            
+                Student Resources
+            
+        </span>
+    </div>
+    <div style="text-align: right; white-space: nowrap">
+
+        
+        
+            
+                
+                    
+                
+            
+                
+                    
+                        
+
+                        
+                            
+                            
+                            
+                        
+                        
+                        <span class="headerModuleTabSelected" onclick="header_goToTab('studentdata','studentid=10009778');">
+                            <img src="/genesis/parents/images/buttons/students_white.png" alt="" style="vertical-align: bottom">
+                            Student Data
+                            
+                                
+                            
+                        </span>
+                    
+                
+            
+                
+                    
+                
+            
+                
+                    
+                        
+
+                        
+                        
+                            
+                            
+                        
+                        <span class="headerModuleTab" onclick="header_goToTab('setup','studentid=10009778');">
+                            <img src="/genesis/parents/images/buttons/settings_blue.png" alt="" style="vertical-align: bottom">
+                            Settings
+                            
+                                
+                            
+                        </span>
+                    
+                
+            
+        
+
+        <span class="headerModuleTab" onclick="location.href='parents?logout=true';">
+            <img src="/genesis/parents/images/buttons/lock_blue.png" alt="" style="vertical-align: bottom">
+            Logout
+        </span>
+        &nbsp;
+   </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="headerCategories">
+    <div class="headerCategories" style="height:15px;">&nbsp;</div>
+
+    
+        
+            
+                
+                    
+
+                    
+                        
+                        
+                    
+                    
+
+                    
+                    
+                        <span class="headerCategoryTabSelected" onclick="header_goToTab('studentdata&amp;tab2=studentsummary','studentid=10009778');">
+                            Summary
+                        </span>
+                    
+
+                
+            
+        
+            
+                
+                    
+
+                    
+                    
+                        
+                    
+
+                    
+                    
+                        <span class="headerCategoryTab" onclick="header_goToTab('studentdata&amp;tab2=attendance','studentid=10009778');">
+                            Attendance
+                        </span>
+                    
+
+                
+            
+        
+            
+                
+                    
+
+                    
+                    
+                        
+                    
+
+                    
+                    
+                        <span class="headerCategoryTab" onclick="header_goToTab('studentdata&amp;tab2=gradebook','studentid=10009778');">
+                            Gradebook
+                        </span>
+                    
+
+                
+            
+        
+            
+                
+                    
+
+                    
+                    
+                        
+                    
+
+                    
+                    
+                        <span class="headerCategoryTab" onclick="header_goToTab('studentdata&amp;tab2=forms','studentid=10009778');">
+                            Forms
+                        </span>
+                    
+
+                
+            
+        
+            
+                
+            
+        
+            
+                
+                    
+
+                    
+                    
+                        
+                    
+
+                    
+                    
+                        <span class="headerCategoryTab" onclick="header_goToTab('studentdata&amp;tab2=school','studentid=10009778');">
+                            School Information
+                        </span>
+                    
+
+                
+            
+        
+    
+</div>
+
+
+    <div class="headerStudentSelector">
+        <div class="headerStudentSelector" style="height:11px;">&nbsp;</div>
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tbody><tr>
+                <td width="50%" style="font-size: 2.4em;font-weight: 300; margin-top: 8px;">
+                    Summary
+                </td>
+
+                <td width="50%">
+                    <label for="fldStudent" style="text-transform: uppercase;">Select Student:</label>
+                    <select name="fldStudent" id="fldStudent" class="headerStudentSelectorInput" onchange="changeStudent(this.value);">
+                        
+                            <option value="10009778" selected="">Modha, Shivan</option>
+                        
+                    </select>
+                </td>
+            </tr>
+        </tbody></table>
+    </div>
+
+
+
+
+
+
+
+
+
+
+    <div style="font-size:.8em; cursor:pointer; padding:2px 0 2px 0;" onclick="toggleDisclaimer();">
+        <table cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+            <tbody><tr>
+                
+                <td style="padding-left: 10px;">Monday, 9/25/2017 9:15PM</td>
+                <td style="text-align: right; padding-right: 10px; color: blue;">Hide</td>
+            </tr>
+        </tbody></table>
+    </div>
+    
+        <table class="notecard" style="padding:8px;"><tbody><tr><td class="notecardTitle"> </td></tr><tr><td>
+            <div style="font-size:.8em;">This online resource is designed to help parents/guardians stay informed. Please use for its intended purpose. Placements may still be adjusted as we are making adjustments for increased enrollment.</div>
+        </td></tr></tbody></table>
+    
+
+<br>
+
+
+
+
+
+
+
+
+<form name="frmCentris" id="frmCentris" method="post" action="https://portal.iepdirect.com/Genesis/Authenticate/Parent" target="_blank">
+    <input type="hidden" name="GenesisRequest" value="">
+</form>
+
+<form name="frmHome" method="post" target="_top" action="">
+
+
+
+
+
+
+
+
+
+
+    
+
+<table class="notecard" style="background-color:#eaf8fc;"><tbody><tr><td class="notecardTitle"> </td></tr><tr><td>
+
+<table>
+
+<tbody><tr valign="top">
+<!-- Draw Student Demographics and whereabouts -->
+<td valign="top">
+    <table class="list">
+        <tbody><tr class="listroweven">
+            <td class="cellCenter" colspan="2" style="border: none;">
+                
+                    <img src="/genesis/sis/photos?type=student&amp;studentID=10009778" style="width:200px; border: solid 1pt #EEEEEE" alt="">
+                
+            </td>
+        </tr>
+        
+        <tr class="listroweven">
+            <td nowrap="" class="cellLeft" colspan="2" style="border: none;">
+                
+                    Homeroom:<br>
+                    
+                    
+                    
+                    
+                        
+                                    <span style="font-weight: 600">
+                                        
+                                        
+                                        
+                                    </span>
+                    
+                
+            </td>
+        </tr>
+        <tr class="listroweven">
+            <td nowrap="" class="cellLeft" colspan="2" style="border: none;">
+                
+                    Counselor:<br>
+                    <span style="font-weight: 600;">
+                        Marcella, Anastasia L
+                        
+                        
+                    </span>
+                
+            </td>
+        </tr>
+        <tr class="listroweven">
+            <td nowrap="" class="cellLeft" style="border: none;padding: 1pt 5pt">Age:</td>
+            <td nowrap="" class="cellLeft" style="border: none;padding: 1pt 5pt;font-weight: 600;">17</td>
+        </tr>
+        
+            <tr class="listroweven">
+                <td nowrap="" class="cellLeft" style="border: none;padding: 1pt 5pt">Birthdate:</td>
+                <td nowrap="" class="cellLeft" style="border: none;padding: 1pt 5pt;font-weight: 600;">03/06/2000</td>
+            </tr>
+        
+
+
+        
+
+        
+
+        
+
+            
+        
+        
+
+            
+        
+        
+        
+    </tbody></table>
+    <br>
+</td>
+
+<!-- Draw the schedule -->
+
+
+<td valign="top">
+    <table class="list" cellspacing="0" cellpadding="0" style="width: 100%; color: #001E37">
+        <tbody><tr>
+            <td style="font-size: 1.5em;">
+                <span style="font-weight: 100; color: #001E37">Shivan</span>
+                Modha
+            </td>
+            <td style="text-align: center;" rowspan="2">
+                <span style="font-size: .8em;text-transform: uppercase">Grade:</span><br>
+                <span style="font-size: 2em;">12</span>
+            </td>
+        </tr>
+        <tr>
+            <td style="font-size:.8em; white-space: nowrap; text-transform: uppercase">
+                
+                
+                    South Brunswick High School
+                    
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                
+                Student ID: <span style="font-weight: bold;">10009778</span>&nbsp;&nbsp;|&nbsp;&nbsp;
+                State ID: <span style="font-weight: bold;">4156292289</span>
+            </td>
+        </tr>
+    </tbody></table>
+    
+    
+        
+        
+    
+    
+    <div style="margin-left: 8pt; margin-top: 3pt; margin-bottom: 7pt; border-top: solid 1px #25ADD3"></div>
+    
+        
+        
+
+        <div style="font-size:10pt;text-align: center;">
+
+            Print Schedule:
+            
+                &nbsp;&nbsp;<a target="_blank" href="parents?tab1=studentdata&amp;tab2=studentsummary&amp;studentid=10009778&amp;action=printSchedule" title="Print schedule in list format"><img src="/genesis/parents/images/buttons/blueAdobe.png" style="width:16px;vertical-align: middle;" alt="" border="0" title="Print schedule in list format"> List</a>
+            
+            
+            
+                
+            
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <span style="font-weight: normal">
+                    Day:
+                    <b>B
+                        
+                    </b>
+                </span>
+            
+                
+        </div>
+
+
+        <table class="list" width="100%" border="0" style="border: solid 1pt #EEEEEE;">
+            
+
+            <tbody><tr class="listheading">
+                <td class="cellCenter">Per</td>
+                <td class="cellLeft" nowrap="">Course</td>
+                <td class="cellLeft">Sem</td>
+                <td class="cellLeft">Days</td>
+                
+                
+                    <td class="cellLeft">Room</td>
+                    <td class="cellLeft" nowrap="">Teacher</td>
+                
+            </tr>
+            
+
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">1</td>
+                <td class="cellLeft">AP STATISTICS</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">B</td>
+                
+                    <td class="cellLeft">B208</td>
+                    <td class="cellLeft" colspan="2">Rumen, Jeffrey</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">1</td>
+                <td class="cellLeft">INDEPENDENT STUDY-GAME DEVELOPMENT</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">E302</td>
+                    <td class="cellLeft" colspan="2">Schiff, Steven</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">AP ART HISTORY</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">B</td>
+                
+                    <td class="cellLeft">210</td>
+                    <td class="cellLeft" colspan="2">Snediker, Betty</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">PHYSICAL EDUCATION 12</td>
+                <td class="cellLeft">Q1</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">GYM</td>
+                    <td class="cellLeft" colspan="2">Verderami, Mindy</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">PHYSICAL EDUCATION 12</td>
+                <td class="cellLeft">Q2</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">GYM</td>
+                    <td class="cellLeft" colspan="2">Verderami, Mindy</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">PHYSICAL EDUCATION 12</td>
+                <td class="cellLeft">Q3</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">GYM</td>
+                    <td class="cellLeft" colspan="2">Verderami, Mindy</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">2</td>
+                <td class="cellLeft">SENIOR HEALTH</td>
+                <td class="cellLeft">Q4</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">B301</td>
+                    <td class="cellLeft" colspan="2">Verderami, Mindy</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">3</td>
+                <td class="cellLeft">MULTIVARIABLE CALCULUS &amp; LINEAR ALGEBRA</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">310</td>
+                    <td class="cellLeft" colspan="2">Cakir, Mesut</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">3</td>
+                <td class="cellLeft">CS TOPICS: DATA STRUCTURES &amp; GAME DESIGN</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">B</td>
+                
+                    <td class="cellLeft">300</td>
+                    <td class="cellLeft" colspan="2">Dentler, Stephen</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        <tr class="listroweven">
+                        
+                    
+                
+
+                <td class="cellCenter">4</td>
+                <td class="cellLeft">HONORS ENGLISH IV</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">B</td>
+                
+                    <td class="cellLeft">D201</td>
+                    <td class="cellLeft" colspan="2">Lehre, Anna</td>
+                
+                
+                </tr>
+            
+                
+                    
+                    
+                        
+                        
+                        <tr class="listrowodd">
+                    
+                
+
+                <td class="cellCenter">4</td>
+                <td class="cellLeft">AP COMPUTER SCIENCE PRINCIPLES</td>
+                <td class="cellLeft">FY</td>
+                <td class="cellLeft">A</td>
+                
+                    <td class="cellLeft">E302</td>
+                    <td class="cellLeft" colspan="2">Romero, Carol</td>
+                
+                
+                </tr>
+            
+            
+        </tbody></table>
+        <br>
+    
+
+        
+    <table class="list" cellspacing="0" cellpadding="0" style="width:100%; margin-bottom: 3pt;">
+        <tbody><tr>
+            <td style="vertical-align: top;">
+
+                <!-- If we will be displaying attendance or assignments, print the table. -->
+                
+
+                    <table cellspacing="0" cellpadding="0" style="border: solid 1pt #EEEEEE; border-collapse: collapse;">
+                            
+                            
+                            
+                        <tbody><tr class="listheading" style="font-weight:bold;">
+                            <td class="cellLeft" style="padding: .25em .5em .25em .5em;">This Week</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">M</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">T</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">W</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">R</td>
+                            <td class="cellCenter" style="padding: .25em .5em .25em .5em;">F</td>
+                        </tr>
+
+                            
+                        
+                            <tr class="listroweven">
+                                
+                                <td class="cellSecondaryHeading cellCenter">Attendance</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+                                <td class="cellCenter" style="background-color: 7dd5ff;color: " title="Present">-</td>
+
+                                
+                            </tr>
+                        
+
+                            
+                        
+                            <tr class="listroweven">
+                                <td class="cellSecondaryHeading cellCenter">Assignments</td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/25/2017');">1</span></td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/26/2017');">0</span></td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/27/2017');">1</span></td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/28/2017');">0</span></td>
+                                
+                                
+                                
+                                <td class="cellCenter"><span style="cursor:pointer;color:#0000ff;text-decoration: underline" onclick="getAssignments('10009778','09/29/2017');">0</span></td>
+                            </tr>
+                        
+                                
+
+                                    
+                                    
+
+                                    
+                                
+                    </tbody></table>
+                
+            </td>
+            <td>
+                
+                
+
+                
+            </td>
+        </tr>
+    </tbody></table>
+    
+        
+    
+</td>
+</tr>
+</tbody></table>
+</td></tr></tbody></table>
+
+<br>
+
+
+</form>
+
+
+    
+    
+    
+    
+
+
+
+
+
+    
+    
+
+    
+    
+
+
+
+
+
+
+
+
+
+<script type="text/javascript">
+    function toggleLanguage()
+    {
+        location.href = document.URL + '&toggleLanguage=true';
+    }
+
+    function toggleMobileSite()
+    {
+        location.href = document.URL + '&toggleMobileSite=true';
+    }
+</script>
+
+  <table class="footer" cellpadding="0" cellspacing="0">
+      <tbody><tr>
+          <td>
+              <div id="google_translate_element"></div>
+              <script type="text/javascript">
+                  function googleTranslateElementInit()
+                  {
+                      // TODO: If any changes are made to includedLanguages, copy them to parentsFooterMobile.jsp and openRegistration/header.jsp
+                      new google.translate.TranslateElement({
+                          pageLanguage: 'en',
+                          includedLanguages: 'ar,es,it,ja,pt,zh-CN,en,ru,ko,gu,tl,fa,vi',
+                          layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+                      }, 'google_translate_element');
+                  }
+              </script>
+              <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script></td></tr></tbody></table></body>
