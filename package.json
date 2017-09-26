@@ -4,9 +4,13 @@
     "description": "Genesis desktop portal",
     "main": "main.js",
     "scripts": {
+        "dev": "start chrome.exe --remote-debugging-port=9222 --disable-gpu --headless",
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node main.js"
     },
     "author": "Shivan Modha",
-    "license": "MIT"
+    "license": "MIT",
+    "dependencies": {
+        "chromeless": "^1.3.0"
+    }
 }
