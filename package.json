@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "start chrome.exe --remote-debugging-port=9222 --disable-gpu --headless",
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node main.js"
+        "start": "node main.js > test.html"
     },
     "author": "Shivan Modha",
     "license": "MIT",
