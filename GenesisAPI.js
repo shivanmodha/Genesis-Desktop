@@ -1,4 +1,3 @@
-const credentials = require('./credentials.json');
 const { Chromeless } = require('chromeless');
 module.exports.Driver =  class Driver
 {
@@ -11,13 +10,17 @@ module.exports.Driver =  class Driver
         this.adapter = new Chromeless({
             launchChrome: true
         });
+        this.username = "";
+        this.password = "";
     }
-    async Connect(_onComplete)
+    async Connect(username, password, _onComplete)
     {
+        this.username = username;
+        this.password = password;
         let instance = await this.adapter
             .goto("https://students.sbschools.org/genesis/parents?gohome=true")
-            .type(credentials.username + "@sbstudents.org", "input[name='j_username']")
-            .type(credentials.password, "input[name='j_password']")
+            .type(username + "@sbstudents.org", "input[name='j_username']")
+            .type(password, "input[name='j_password']")
             .click("input[class='saveButton']")
             .wait(1000)        
             .evaluate(() =>
@@ -30,7 +33,7 @@ module.exports.Driver =  class Driver
     {
         let instance = await this.adapter
             .goto("https://students.sbschools.org/")
-            .click("span[onClick=\"header_goToTab('studentdata&tab2=studentsummary','studentid=" + credentials.username + "');\"]")
+            .click("span[onClick=\"header_goToTab('studentdata&tab2=studentsummary','studentid=" + this.username + "');\"]")
             .wait(1000)
             .evaluate(() =>
             {
@@ -52,6 +55,7 @@ module.exports.Driver =  class Driver
                     let period = rows[i][0] + rows[i][3];
                     let bypass = {
                         "ap": true,
+                        "cs": true,
                         "i": true,
                         "ii": true,
                         "iii": true,
@@ -59,9 +63,6 @@ module.exports.Driver =  class Driver
                         "v": true,
                         "vi": true
                     };
-                    let termConvert = {
-                        "FY": "Full Year"
-                    }
                     let json = {
                         course: (() =>
                         {
@@ -112,7 +113,6 @@ module.exports.Driver =  class Driver
                     }    
                 }
                 return _return;
-                //return document.documentElement.innerHTML;
             });
         _onComplete(instance);
     }
@@ -120,7 +120,7 @@ module.exports.Driver =  class Driver
     {
         let instance = await this.adapter
             .goto("https://students.sbschools.org/")
-            .click("span[onClick=\"header_goToTab('studentdata&tab2=gradebook','studentid=" + credentials.username + "');\"]")
+            .click("span[onClick=\"header_goToTab('studentdata&tab2=gradebook','studentid=" + this.username + "');\"]")
             .wait(1000)
             .evaluate(() =>
             {

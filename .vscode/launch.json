@@ -4,8 +4,13 @@
             {
                 "type": "node",
                 "request": "launch",
-                "name": "Launch Program",
-                "program": "node main.js"
+                "name": "Launch via NPM",
+                "runtimeExecutable": "npm",
+                "runtimeArgs": [
+                    "start",
+                    "debug"
+                ],
+                "port": 5858
             }
         ]
     }
