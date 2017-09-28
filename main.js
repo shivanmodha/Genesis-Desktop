@@ -3,9 +3,13 @@ const credentials = require('./credentials.json');
 let driver = new Driver();
 driver.Connect(credentials.username, credentials.password, (obj) =>
 {
-    driver.GetSchedule((sched) =>
+    driver.GetSchedule((output) =>
     {
-        console.log(sched);
-        driver.Disconnect(() => { });
+        console.log(output); 
+        driver.GetDashboard((output) =>
+        {
+            console.log(output);
+            driver.Disconnect(() => { });
+        });
     });
 });
