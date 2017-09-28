@@ -4,6 +4,7 @@ module.exports.Driver =  class Driver
     constructor()
     {
         this.Initialize();
+        this.wait = 500;
     }
     Initialize()
     {
@@ -22,7 +23,7 @@ module.exports.Driver =  class Driver
             .type(username + "@sbstudents.org", "input[name='j_username']")
             .type(password, "input[name='j_password']")
             .click("input[class='saveButton']")
-            .wait(1000)
+            .wait(this.wait)
             .evaluate(() =>
             {
                 return document.documentElement.innerHTML;
@@ -34,7 +35,7 @@ module.exports.Driver =  class Driver
         let instance = await this.adapter
             .goto("https://students.sbschools.org/")
             .click("span[onClick=\"header_goToTab('studentdata&tab2=studentsummary','studentid=" + this.username + "');\"]")
-            .wait(1000)
+            .wait(this.wait)
             .evaluate(() =>
             {
                 let _return = {};
@@ -121,7 +122,7 @@ module.exports.Driver =  class Driver
         let instance = await this.adapter
             .goto("https://students.sbschools.org/")
             .click("span[onClick=\"header_goToTab('studentdata&tab2=gradebook','studentid=" + this.username + "');\"]")
-            .wait(1000)
+            .wait(this.wait)
             .evaluate(() =>
             {
                 let elements = [].map.call(document.querySelectorAll('.list'), e =>
@@ -229,6 +230,17 @@ module.exports.Driver =  class Driver
                     };
                 }
                 return _return;
+            });
+        _onComplete(instance);
+    }
+    async GetClass(args, MP, _onComplete)
+    {
+        let instance = await this.adapter
+            .goto("https://students.sbschools.org/genesis/parents?tab1=studentdata&tab2=gradebook&tab3=coursesummary&studentid=" + this.username + "&action=form&courseCode=" + args[0] + "&courseSection=" + args[1] + "&mp=" + MP)
+            .wait(this.wait)
+            .evaluate(() =>
+            {
+                return document.documentElement.innerHTML;
             });
         _onComplete(instance);
     }
