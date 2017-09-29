@@ -240,7 +240,81 @@ module.exports.Driver =  class Driver
             .wait(this.wait)
             .evaluate(() =>
             {
-                return document.documentElement.innerHTML;
+                let elements = [].map.call(document.querySelectorAll('.list'), e =>
+                {
+                    return e;
+                });
+                let rows = [].map.call(elements[0].querySelectorAll('tr'), e =>
+                {
+                    let columns = [].map.call(e.querySelectorAll('td'), e =>
+                    {
+                        return e;
+                    });
+                    return columns;
+                });
+                let ai = [];
+                for (let i = 2; i < rows.length - 6; i++)
+                {
+                    ai.push(rows[i]);
+                }
+                let _return = [];
+                let DayKVP = {
+                    "Mon": "Monday",
+                    "Tue": "Tuesday",
+                    "Wed": "Wednesday",
+                    "Thu": "Thursday",
+                    "Fri": "Friday",
+                    "Sat": "Saturday",
+                    "Sun": "Sunday"
+                }
+                let MonthKVP = {
+                    1: "January",
+                    2: "February",
+                    3: "March",
+                    4: "April",
+                    5: "May",
+                    6: "June",
+                    7: "July",
+                    8: "August",
+                    9: "September",
+                    10: "October",
+                    11: "November",
+                    12: "December"
+                }
+                for (let i = 0; i < ai.length; i += 7)
+                {
+                    let markingperiod = ai[i + 0][0].innerHTML;
+                    let dateArr = [].map.call(ai[i + 0][1].querySelectorAll('div'), e =>
+                    {
+                        return e.innerHTML;
+                    });
+                    let dNumArr = dateArr[1].split('/');
+                    let date = DayKVP[dateArr[0]] + ", " + MonthKVP[dNumArr[0]] + " " + dNumArr[1];
+                    let teacher = ai[i + 0][2].innerHTML;
+                    let category = ai[i + 0][3].innerHTML;
+                    category = category.substring(category.lastIndexOf("</div>") + 7);
+                    while (category.includes("\n"))
+                    {
+                        category = category.replace("\n", "");
+                    }    
+                    category = category.trim();
+                    let name = ai[i + 0][5].innerHTML;
+                    let percent = ai[i + 0][12].querySelector('div').innerHTML.substring(3);
+                    percent = percent.substring(0, percent.indexOf("\n"));
+                    percent = percent.trim();
+                    percent = percent.substring(0, percent.length - 1);
+                    percent = eval(percent);
+                    _return.push({
+                        markingperiod: markingperiod,
+                        date: date,
+                        teacher: teacher,
+                        category: category,
+                        assignment: name,
+                        percent: percent,
+                        letter: ""
+                    });
+                }
+                return _return;
             });
         _onComplete(instance);
     }

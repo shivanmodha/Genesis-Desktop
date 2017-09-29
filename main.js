@@ -9,7 +9,12 @@ driver.Connect(credentials.username, credentials.password, (obj) =>
         driver.GetDashboard((output) =>
         {
             console.log(output);
-            let keys = Object.keys(output);
+            driver.GetClass(output[Object.keys(output)[2]].args, "MP1", (output) =>
+            {
+                console.log(output);
+                driver.Disconnect(() => { });
+            });
+            /*let keys = Object.keys(output);
             let func = (i, arr, obj, _onComplete) =>
             {
                 if (i < keys.length)
@@ -44,7 +49,7 @@ driver.Connect(credentials.username, credentials.password, (obj) =>
             {
                 console.log(output);
                 driver.Disconnect(() => { });
-            })
+            })*/
         });
     });
 });
