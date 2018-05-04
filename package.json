@@ -5,6 +5,7 @@
     "main": "main.js",
     "scripts": {
         "dev": "start chrome.exe --remote-debugging-port=9222 --disable-gpu --headless",
+        "devlinux": "google-chrome --remote-debugging-port=9222 --disable-gpu --headless",
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node main.js > log.txt"
     },
